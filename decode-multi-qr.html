@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Decoder</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Lato:wght@400;500&display=swap');
+
+        :root {
+            --primary-color: #0d6efd;
+            --primary-hover-color: #0b5ed7;
+            --background-color: #121212;
+            --container-bg-color: #1e1e1e;
+            --text-color: #e0e0e0;
+            --muted-text-color: #888888;
+            --border-color: #333333;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --item-bg-color: #2c2c2c;
+            --item-hover-bg-color: #383838;
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 4rem 1rem;
+            box-sizing: border-box;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        #container {
+            background: var(--container-bg-color);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-family: 'Poppins', sans-serif;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 1.75rem;
+        }
+
+        header p {
+            color: var(--muted-text-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .instructions {
+            margin-bottom: 1.5rem;
+        }
+
+        .instructions .lang-km {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+
+        .warning p {
+            margin: 0;
+            color: #ffc107;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .warning strong {
+            color: #ffca2c;
+        }
+
+        .upload-btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            transition: background-color 0.3s;
+        }
+
+        .upload-btn-wrapper:hover {
+            background-color: var(--primary-hover-color);
+        }
+
+        .upload-btn-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        #results-container {
+            width: 100%;
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+
+        #results-container.hidden {
+            display: none;
+        }
+
+        #results-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            background-color: var(--item-bg-color);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+        
+        .result-item:hover {
+            background-color: var(--item-hover-bg-color);
+        }
+
+        .result-item.result-error {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-color: rgba(220, 53, 69, 0.3);
+        }
+
+        .result-info {
+            flex-grow: 1;
+            margin-right: 1rem;
+            text-align: left;
+        }
+
+        .result-text {
+            font-size: 0.95rem;
+            color: var(--text-color);
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+        
+        .result-text-error {
+            color: var(--error-color);
+        }
+
+        .file-name {
+            font-size: 0.8rem;
+            color: var(--muted-text-color);
+            margin-top: 4px;
+            display: block;
+        }
+
+        .copy-btn {
+            background-color: transparent;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted-text-color);
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: #333;
+            color: var(--text-color);
+        }
+        
+        .copy-btn .icon-success {
+            color: var(--success-color);
+        }
+
+        #loader {
+            border: 4px solid #333;
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 2rem auto;
+        }
+
+        footer {
+            margin-top: 2rem;
+            font-size: 0.875rem;
+            color: var(--muted-text-color);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <header>
+            <h1>QR Code Decoder</h1>
+            <div class="instructions">
+                <p class="lang-en">Upload one or more images to instantly decode QR codes.</p>
+                <p class="lang-km">សូម​បញ្ចូល​រូបភាព​មួយ​ឬ​ច្រើន​ដើម្បី​ឌិកូដ​កូដ QR។</p>
+            </div>
+            <div class="warning">
+                <p class="lang-en"><strong>Please Note:</strong> If an image contains multiple QR codes, only the first one found will be processed.</p>
+                <p class="lang-km" style="margin-top: 0.5rem;"><strong>សូមចំណាំ៖</strong> ប្រសិនបើរូបភាពមានកូដ QR ច្រើន នោះប្រព័ន្ធនឹងដំណើរការតែកូដទីមួយដែលរកឃើញប៉ុណ្ណោះ។</p>
+            </div>
+        </header>
+
+        <div class="upload-btn-wrapper">
+            <span id="upload-btn-text">Select Image(s)</span>
+            <input type="file" id="qr-input" accept="image/*" multiple>
+        </div>
+
+        <div id="loader"></div>
+        <div id="results-container" class="hidden">
+            <p><strong>Decoding Results:</strong></p>
+            <ul id="results-list"></ul>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 QR Decoder. All rights reserved.</p>
+    </footer>
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script>
+        const qrInput = document.getElementById('qr-input');
+        const uploadBtnText = document.getElementById('upload-btn-text');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsList = document.getElementById('results-list');
+        const loader = document.getElementById('loader');
+
+        const copyIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1-1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>`;
+        const successIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="icon-success" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z"/></svg>`;
+
+        const decodeFile = (file) => {
+            return new Promise((resolve, reject) => {
+                let dummyQrRegion = document.createElement('div');
+                dummyQrRegion.id = `qr-region-${Math.random().toString(36).substr(2, 9)}`;
+                dummyQrRegion.style.display = 'none';
+                document.body.appendChild(dummyQrRegion);
+
+                const html5QrCode = new Html5Qrcode(dummyQrRegion.id);
+                html5QrCode.scanFile(file, false)
+                    .then(decodedText => {
+                        document.body.removeChild(dummyQrRegion);
+                        resolve({fileName: file.name, decodedText});
+                    })
+                    .catch(err => {
+                        document.body.removeChild(dummyQrRegion);
+                        reject({fileName: file.name, error: err});
+                    });
+            });
+        };
+
+        const createResultItem = (result) => {
+            const listItem = document.createElement('li');
+            listItem.className = 'result-item';
+
+            const resultInfoDiv = document.createElement('div');
+            resultInfoDiv.className = 'result-info';
+
+            const textSpan = document.createElement('span');
+            textSpan.className = 'result-text';
+
+            const fileNameSpan = document.createElement('span');
+            fileNameSpan.className = 'file-name';
+            fileNameSpan.textContent = result.fileName;
+
+            if (result.decodedText) {
+                textSpan.textContent = result.decodedText;
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.title = 'Copy to clipboard';
+                copyBtn.innerHTML = copyIcon;
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(result.decodedText).then(() => {
+                        copyBtn.innerHTML = successIcon;
+                        setTimeout(() => { copyBtn.innerHTML = copyIcon; }, 2000);
+                    });
+                });
+                resultInfoDiv.appendChild(textSpan);
+                resultInfoDiv.appendChild(fileNameSpan);
+                listItem.appendChild(resultInfoDiv);
+                listItem.appendChild(copyBtn);
+            } else {
+                listItem.classList.add('result-error');
+                textSpan.textContent = 'Failed to decode QR code.';
+                textSpan.classList.add('result-text-error');
+                resultInfoDiv.appendChild(textSpan);
+                resultInfoDiv.appendChild(fileNameSpan);
+                listItem.appendChild(resultInfoDiv);
+            }
+            
+            resultsList.appendChild(listItem);
+        };
+
+        qrInput.addEventListener('change', async (event) => {
+            const files = event.target.files;
+            if (!files || files.length === 0) {
+                return;
+            }
+
+            resultsContainer.classList.remove('hidden');
+            resultsList.innerHTML = '';
+            loader.style.display = 'block';
+
+            const decodePromises = Array.from(files).map(decodeFile);
+
+            const results = await Promise.allSettled(decodePromises);
+
+            loader.style.display = 'none';
+
+            results.forEach(result => {
+                if (result.status === 'fulfilled') {
+                    createResultItem(result.value);
+                } else {
+                    createResultItem(result.reason);
+                }
+            });
+            
+            qrInput.value = '';
+        });
+    </script>
+</body>
+</html>
